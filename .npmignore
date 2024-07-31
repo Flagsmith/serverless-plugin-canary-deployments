@@ -3,7 +3,7 @@ node_modules
 .serverless
 .serverless_plugins
 mappings.json
-essent-serverless-plugin-canary-deployments*.tgz
+serverless-plugin-canary-deployments*.tgz
 .vscode
 *.iml
 .idea
