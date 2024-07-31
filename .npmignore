@@ -1,1 +1,17 @@
+# Rules from: .gitignore
+node_modules
+.serverless
+.serverless_plugins
+mappings.json
+essent-serverless-plugin-canary-deployments*.tgz
+.vscode
+*.iml
+.idea
+
+# Custom rules
+.circleci/
+.github/
 example/
+fixtures/
+.editorconfig
+*.test.js
