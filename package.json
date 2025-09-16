@@ -1,7 +1,7 @@
 {
   "name": "@flagsmith/serverless-plugin-canary-deployments",
   "engines": {
-    "node": ">=4.0"
+    "node": ">=18.0"
   },
   "version": "0.9.1",
   "description": "A Serverless plugin to implement canary deployment of Lambda functions",
