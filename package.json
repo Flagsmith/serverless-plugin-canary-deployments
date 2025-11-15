@@ -31,9 +31,9 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "get-installed-path": "^4.0.8",
-    "husky": "^3.0.1",
+    "husky": "^9.1.7",
     "mocha": "^10.2.0",
-    "serverless": "^2.22.0",
+    "serverless": "^4.23.0",
     "standard": "*"
   },
   "peerDependencies": {
