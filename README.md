@@ -7,8 +7,11 @@ A Serverless plugin to implement canary deployments of Lambda functions, making 
 ## Contents
 
 - [Installation](#installation)
+- [IAM Permissions](#iam-permissions)
 - [Usage](#usage)
 - [Configuration](#configuration)
+- [Canary Alarms](#canary-alarms)
+- [Cross-Region Orchestration](#cross-region-orchestration)
 - [How it works](#how)
 - [Limitations](#limitations)
 - [License](#license)
@@ -16,6 +19,109 @@ A Serverless plugin to implement canary deployments of Lambda functions, making 
 ## <a name="installation"></a>Installation
 
 `npm i --save-dev @flagsmith/serverless-plugin-canary-deployments`
+
+## <a name="iam-permissions"></a>IAM Permissions
+
+This plugin creates and manages several AWS resources. The IAM user or role deploying your Serverless service needs the following permissions:
+
+### CloudFormation
+
+```
+cloudformation:CreateStack
+cloudformation:UpdateStack
+cloudformation:DeleteStack
+cloudformation:DescribeStacks
+cloudformation:DescribeStackEvents
+cloudformation:DescribeStackResource
+cloudformation:GetTemplate
+cloudformation:ValidateTemplate
+```
+
+### CodeDeploy
+
+```
+codedeploy:CreateApplication
+codedeploy:DeleteApplication
+codedeploy:GetApplication
+codedeploy:CreateDeploymentGroup
+codedeploy:DeleteDeploymentGroup
+codedeploy:UpdateDeploymentGroup
+codedeploy:GetDeploymentGroup
+codedeploy:CreateDeployment
+codedeploy:GetDeployment
+codedeploy:StopDeployment
+```
+
+### Lambda
+
+```
+lambda:CreateAlias
+lambda:DeleteAlias
+lambda:UpdateAlias
+lambda:GetAlias
+lambda:GetFunction
+lambda:GetFunctionConfiguration
+lambda:PublishVersion
+lambda:ListVersionsByFunction
+lambda:UpdateFunctionCode
+lambda:UpdateFunctionConfiguration
+lambda:AddPermission
+lambda:RemovePermission
+```
+
+### IAM
+
+```
+iam:CreateRole
+iam:DeleteRole
+iam:GetRole
+iam:PassRole
+iam:AttachRolePolicy
+iam:DetachRolePolicy
+iam:PutRolePolicy
+iam:DeleteRolePolicy
+```
+
+### CloudWatch (for alarms)
+
+```
+cloudwatch:PutMetricAlarm
+cloudwatch:DeleteAlarms
+cloudwatch:DescribeAlarms
+cloudwatch:PutCompositeAlarm
+cloudwatch:DeleteAlarms
+```
+
+### Service-specific permissions
+
+Depending on which event sources trigger your Lambda functions, you may also need:
+
+| Event Source | Permissions |
+| --- | --- |
+| API Gateway | `apigateway:*` on your API resources |
+| SNS | `sns:Subscribe`, `sns:Unsubscribe` |
+| S3 | `s3:PutBucketNotification` |
+| CloudWatch Events | `events:PutRule`, `events:PutTargets`, `events:RemoveTargets`, `events:DeleteRule` |
+| CloudWatch Logs | `logs:PutSubscriptionFilter`, `logs:DeleteSubscriptionFilter` |
+| IoT | `iot:CreateTopicRule`, `iot:ReplaceTopicRule`, `iot:DeleteTopicRule` |
+| AppSync | `appsync:UpdateDataSource` |
+| ALB/NLB | `elasticloadbalancing:RegisterTargets`, `elasticloadbalancing:DeregisterTargets` |
+
+### CodeDeploy Service Role
+
+The plugin creates a CodeDeploy service role with the following managed policies attached:
+- `arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForLambdaLimited`
+- `arn:aws:iam::aws:policy/AWSLambda_FullAccess`
+
+If you provide your own `codeDeployRole`, ensure it has equivalent permissions. See [example-code-deploy-policy.json](./example-code-deploy-policy.json) for reference.
+
+### Lambda Execution Role
+
+For pre/post traffic hooks to report deployment status, the plugin adds this permission to your Lambda execution role:
+
+```
+codedeploy:PutLifecycleEventHookExecutionStatus
+```
 
 ## <a name="usage"></a>Usage
 
@@ -98,6 +204,159 @@ Some values are only available as top-level configurations.  They are:
 * `codeDeployRole`: (optional) an ARN specifying an existing IAM role for CodeDeploy.  If absent, one will be created for you.  See the [codeDeploy policy](./example-code-deploy-policy.json) for an example of what is needed.
 * `codeDeployRolePermissionsBoundary`: (optional) an ARN specifying an existing IAM permissions boundary, this permission boundary is set on the code deploy that is being created when codeDeployRole is not defined.
 * `stages`: (optional) list of stages where you want to deploy your functions gradually. If not present, it assumes that are all of them.
+
+## <a name="canary-alarms"></a>Canary Alarms
+
+Canary alarms are version-specific CloudWatch alarms that monitor only the **new Lambda version** during deployment. This solves the "pre-existing alarm" problem where a deployment fails because the previous version's errors keep an alarm in ALARM state.
+
+`canaryAlarms` creates CloudWatch alarms with the `ExecutedVersion` dimension, which only monitors metrics from the specific Lambda version being deployed.
+
+```yaml
+functions:
+  hello:
+    handler: handler.hello
+    deploymentSettings:
+      type: Canary10Percent5Minutes
+      alias: Live
+      canaryAlarms:
+        - type: errors    # Use preset configuration
+```
+
+### Configuration
+
+* `canaryAlarms`: (optional) list of version-specific CloudWatch alarms to create. Each alarm can be:
+
+**Using a preset:**
+```yaml
+canaryAlarms:
+  - type: errors              # Use 'errors' preset
+  - type: errors              # Override preset values
+    threshold: 5
+```
+
+**Using custom configuration:**
+```yaml
+canaryAlarms:
+  - metric: Duration
+    threshold: 5000
+    comparisonOperator: GreaterThanThreshold
+    statistic: Average
+```
+
+### Preset: `errors`
+
+The `errors` preset creates an alarm with these defaults:
+
+| Property           | Value                |
+| ------------------ | -------------------- |
+| metric             | Errors               |
+| namespace          | AWS/Lambda           |
+| statistic          | Sum                  |
+| period             | 300                  |
+| evaluationPeriods  | 2                    |
+| datapointsToAlarm  | 1                    |
+| threshold          | 1000                 |
+| comparisonOperator | GreaterThanThreshold |
+| treatMissingData   | missing              |
+
+### Custom Alarm Properties
+
+| Property             | Type   | Default                | Description                   |
+| -------------------- | ------ | ---------------------- | ----------------------------- |
+| `type`               | string | -                      | Preset name (`errors`)        |
+| `metric`             | string | required               | CloudWatch metric name        |
+| `threshold`          | number | required               | Alarm threshold value         |
+| `comparisonOperator` | string | `GreaterThanThreshold` | Comparison operator           |
+| `statistic`          | string | `Sum`                  | Metric statistic              |
+| `period`             | number | `300`                  | Period in seconds             |
+| `evaluationPeriods`  | number | `2`                    | Number of periods to evaluate |
+| `datapointsToAlarm`  | number | `1`                    | Datapoints to trigger alarm   |
+| `treatMissingData`   | string | `missing`              | How to treat missing data     |
+
+### Generated Resources
+
+When you configure `canaryAlarms`, the plugin generates:
+
+1. **Per-function canary alarms** with the `ExecutedVersion` dimension
+2. **A stack composite alarm** that fires if ANY function's canary alarm fires
+
+The composite alarm uses a predictable name: `${service}-${stage}-canary-composite`
+
+### Using with Standard Alarms
+
+You can use both `alarms` and `canaryAlarms` together:
+
+```yaml
+functions:
+  hello:
+    deploymentSettings:
+      type: Canary10Percent5Minutes
+      alias: Live
+      alarms:
+        - name: my-global-composite-alarm    # External alarm (e.g., cross-region)
+      canaryAlarms:
+        - type: errors                        # Version-specific alarm
+```
+
+## <a name="cross-region-orchestration"></a>Cross-Region Orchestration
+
+For multi-region deployments where you want stack-wide rollback across ALL regions when any region's canary fails.
+
+### Prerequisites
+
+- CloudWatch OAM (Observability Access Manager) links configured between regions
+- A "global" composite alarm in a central/monitoring region
+
+### Stack Composite Naming Convention
+
+The plugin creates a stack composite alarm with a **predictable name**:
+
+```
+${service}-${stage}-canary-composite
+```
+
+Full ARN pattern:
+```
+arn:aws:cloudwatch:${region}:${accountId}:alarm:${service}-${stage}-canary-composite
+```
+
+### Setting Up OAM
+
+1. **Create an OAM Sink** in your monitoring region
+2. **Create OAM Links** from each source region to the sink
+3. **Create a Global Composite Alarm** that references all regional stack composites
+
+See [AWS CloudWatch OAM documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) for detailed setup instructions.
+
+### Global Composite Alarm Example
+
+```yaml
+GlobalCanaryComposite:
+  Type: AWS::CloudWatch::CompositeAlarm
+  Properties:
+    AlarmName: my-service-prod-global-canary-composite
+    AlarmDescription: "Triggers if any region's canary deployment has errors"
+    AlarmRule: |
+      ALARM("arn:aws:cloudwatch:us-east-1:123456789:alarm:my-service-prod-canary-composite") OR
+      ALARM("arn:aws:cloudwatch:eu-west-1:123456789:alarm:my-service-prod-canary-composite") OR
+      ALARM("arn:aws:cloudwatch:ap-southeast-1:123456789:alarm:my-service-prod-canary-composite")
+```
+
+### Referencing the Global Composite
+
+Once set up, reference the global composite in your serverless.yml:
+
+```yaml
+functions:
+  hello:
+    deploymentSettings:
+      type: Canary10Percent5Minutes
+      alias: Live
+      alarms:
+        - name: my-service-prod-global-canary-composite   # Cross-region rollback
+      canaryAlarms:
+        - type: errors
+```
 
 ## <a name="how"></a>How it works
 

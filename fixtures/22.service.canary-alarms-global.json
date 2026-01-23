@@ -1,0 +1,17 @@
+{
+  "service": "canary-deployments-test",
+  "functions": {
+    "hello": {
+      "handler": "handler.hello",
+      "events": [{ "http": "GET hello" }],
+      "deploymentSettings": {
+        "type": "Linear10PercentEvery1Minute",
+        "alias": "Live",
+        "alarms": [
+          { "name": "canary-deployments-test-prod-global-canary-composite" }
+        ],
+        "canaryAlarms": [{ "type": "errors" }]
+      }
+    }
+  }
+}

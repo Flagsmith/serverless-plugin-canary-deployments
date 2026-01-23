@@ -1,0 +1,146 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": { "Type": "AWS::S3::Bucket" },
+    "HelloLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": { "LogGroupName": "/aws/lambda/canary-deployments-test-dev-hello" }
+    },
+    "WorldLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": { "LogGroupName": "/aws/lambda/canary-deployments-test-dev-world" }
+    },
+    "IamRoleLambdaExecution": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{ "Effect": "Allow", "Principal": { "Service": ["lambda.amazonaws.com"] }, "Action": ["sts:AssumeRole"] }]
+        },
+        "Policies": [{
+          "PolicyName": { "Fn::Join": ["-", ["dev", "canary-deployments-test", "lambda"]] },
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              { "Effect": "Allow", "Action": ["logs:CreateLogStream", "logs:PutLogEvents"], "Resource": ["*"] },
+              { "Effect": "Allow", "Action": ["codedeploy:*"], "Resource": ["*"] }
+            ]
+          }
+        }],
+        "Path": "/",
+        "RoleName": { "Fn::Join": ["-", ["canary-deployments-test", "dev", "us-east-1", "lambdaRole"]] }
+      }
+    },
+    "HelloLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": { "S3Bucket": { "Ref": "ServerlessDeploymentBucket" }, "S3Key": "hello.zip" },
+        "FunctionName": "canary-deployments-test-dev-hello",
+        "Handler": "handler.hello",
+        "MemorySize": 1024,
+        "Role": { "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"] },
+        "Runtime": "nodejs18.x",
+        "Timeout": 6
+      },
+      "DependsOn": ["HelloLogGroup", "IamRoleLambdaExecution"]
+    },
+    "HelloLambdaVersionABC123": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": { "FunctionName": { "Ref": "HelloLambdaFunction" }, "CodeSha256": "abc123" }
+    },
+    "WorldLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": { "S3Bucket": { "Ref": "ServerlessDeploymentBucket" }, "S3Key": "world.zip" },
+        "FunctionName": "canary-deployments-test-dev-world",
+        "Handler": "handler.world",
+        "MemorySize": 1024,
+        "Role": { "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"] },
+        "Runtime": "nodejs18.x",
+        "Timeout": 6
+      },
+      "DependsOn": ["WorldLogGroup", "IamRoleLambdaExecution"]
+    },
+    "WorldLambdaVersionDEF456": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": { "FunctionName": { "Ref": "WorldLambdaFunction" }, "CodeSha256": "def456" }
+    },
+    "ApiGatewayRestApi": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": { "Name": "dev-canary-deployments-test" }
+    },
+    "ApiGatewayResourceHello": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": { "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"] },
+        "PathPart": "hello",
+        "RestApiId": { "Ref": "ApiGatewayRestApi" }
+      }
+    },
+    "ApiGatewayResourceWorld": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": { "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"] },
+        "PathPart": "world",
+        "RestApiId": { "Ref": "ApiGatewayRestApi" }
+      }
+    },
+    "ApiGatewayMethodHelloGet": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "GET",
+        "ResourceId": { "Ref": "ApiGatewayResourceHello" },
+        "RestApiId": { "Ref": "ApiGatewayRestApi" },
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": { "Fn::Join": ["", ["arn:aws:apigateway:", { "Ref": "AWS::Region" }, ":lambda:path/2015-03-31/functions/", { "Fn::GetAtt": ["HelloLambdaFunction", "Arn"] }, "/invocations"]] }
+        }
+      }
+    },
+    "ApiGatewayMethodWorldGet": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "GET",
+        "ResourceId": { "Ref": "ApiGatewayResourceWorld" },
+        "RestApiId": { "Ref": "ApiGatewayRestApi" },
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": { "Fn::Join": ["", ["arn:aws:apigateway:", { "Ref": "AWS::Region" }, ":lambda:path/2015-03-31/functions/", { "Fn::GetAtt": ["WorldLambdaFunction", "Arn"] }, "/invocations"]] }
+        }
+      }
+    },
+    "HelloLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": { "Fn::GetAtt": ["HelloLambdaFunction", "Arn"] },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com"
+      }
+    },
+    "WorldLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": { "Fn::GetAtt": ["WorldLambdaFunction", "Arn"] },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com"
+      }
+    },
+    "ExistingAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": "ExistingAlarm",
+        "MetricName": "Errors",
+        "Namespace": "AWS/Lambda",
+        "Threshold": 1
+      }
+    }
+  },
+  "Outputs": {}
+}
