@@ -367,8 +367,8 @@
           }
         ],
         "Statistic": "Sum",
-        "Period": 300,
-        "EvaluationPeriods": 2,
+        "Period": 60,
+        "EvaluationPeriods": 1,
         "DatapointsToAlarm": 1,
         "Threshold": 1000,
         "ComparisonOperator": "GreaterThanThreshold",
