@@ -523,6 +523,7 @@ class ServerlessCanaryDeployments {
           serverlessFunctionName,
           functionName,
           versionName,
+          aliasName: deploymentSettings.alias,
           alarmConfig
         })
         resources.push(alarmResult.resource)
@@ -538,7 +539,7 @@ class ServerlessCanaryDeployments {
     return resources
   }
 
-  buildCanaryAlarm ({ serverlessFunctionName, functionName, versionName, alarmConfig }) {
+  buildCanaryAlarm ({ serverlessFunctionName, functionName, versionName, aliasName, alarmConfig }) {
     const metricName = alarmConfig.type || alarmConfig.metric || 'unknown'
     const normalizedMetric = metricName.toLowerCase().replace(/[^a-z0-9]/g, '')
     const normalizedFnName = serverlessFunctionName.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -550,6 +551,7 @@ class ServerlessCanaryDeployments {
       functionName,
       functionRef: functionName,
       versionName,
+      aliasName,
       alarmConfig,
       serviceName: this.serviceName,
       stage: this.currentStage

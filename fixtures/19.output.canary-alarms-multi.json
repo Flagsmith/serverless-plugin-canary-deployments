@@ -470,6 +470,20 @@
             }
           },
           {
+            "Name": "Resource",
+            "Value": {
+              "Fn::Join": [
+                ":",
+                [
+                  {
+                    "Ref": "HelloLambdaFunction"
+                  },
+                  "Live"
+                ]
+              ]
+            }
+          },
+          {
             "Name": "ExecutedVersion",
             "Value": {
               "Fn::GetAtt": [
@@ -502,6 +516,20 @@
             "Name": "FunctionName",
             "Value": {
               "Ref": "WorldLambdaFunction"
+            }
+          },
+          {
+            "Name": "Resource",
+            "Value": {
+              "Fn::Join": [
+                ":",
+                [
+                  {
+                    "Ref": "WorldLambdaFunction"
+                  },
+                  "Live"
+                ]
+              ]
             }
           },
           {

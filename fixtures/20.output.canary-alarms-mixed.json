@@ -474,6 +474,20 @@
             }
           },
           {
+            "Name": "Resource",
+            "Value": {
+              "Fn::Join": [
+                ":",
+                [
+                  {
+                    "Ref": "HelloLambdaFunction"
+                  },
+                  "Live"
+                ]
+              ]
+            }
+          },
+          {
             "Name": "ExecutedVersion",
             "Value": {
               "Fn::GetAtt": [
