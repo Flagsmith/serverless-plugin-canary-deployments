@@ -172,14 +172,29 @@ class ServerlessCanaryDeployments {
   buildFunctionDeploymentGroup ({ deploymentSettings, functionName }) {
     const logicalName = this.getFunctionDeploymentGroupId(functionName)
     const codeDeployGroupName = this.getDeploymentGroupName(logicalName)
+
+    // If canaryAlarms is configured, add the composite alarm to the alarms array
+    const effectiveSettings = this.addCanaryAlarmToDeploymentSettings(deploymentSettings)
+
     const params = {
       codeDeployAppName: this.codeDeployAppName,
       codeDeployGroupName,
-      codeDeployRoleArn: deploymentSettings.codeDeployRole,
-      deploymentSettings
+      codeDeployRoleArn: effectiveSettings.codeDeployRole,
+      deploymentSettings: effectiveSettings
     }
     const template = CfGenerators.codeDeploy.buildFnDeploymentGroup(params)
     return { [logicalName]: template }
+  }
+
+  addCanaryAlarmToDeploymentSettings (deploymentSettings) {
+    if (!deploymentSettings.canaryAlarms || deploymentSettings.canaryAlarms.length === 0) {
+      return deploymentSettings
+    }
+
+    const existingAlarms = deploymentSettings.alarms || []
+    const alarmsWithCanary = [...existingAlarms, 'CanaryDeploymentCompositeAlarm']
+
+    return Object.assign({}, deploymentSettings, { alarms: alarmsWithCanary })
   }
 
   buildFunctionAlias ({ deploymentSettings = {}, functionName, deploymentGroup, targetAlias }) {

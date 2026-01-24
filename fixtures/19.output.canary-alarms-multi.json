@@ -345,6 +345,16 @@
             "CodeDeployServiceRole",
             "Arn"
           ]
+        },
+        "AlarmConfiguration": {
+          "Alarms": [
+            {
+              "Name": {
+                "Ref": "CanaryDeploymentCompositeAlarm"
+              }
+            }
+          ],
+          "Enabled": true
         }
       }
     },
@@ -405,6 +415,16 @@
             "CodeDeployServiceRole",
             "Arn"
           ]
+        },
+        "AlarmConfiguration": {
+          "Alarms": [
+            {
+              "Name": {
+                "Ref": "CanaryDeploymentCompositeAlarm"
+              }
+            }
+          ],
+          "Enabled": true
         }
       }
     },

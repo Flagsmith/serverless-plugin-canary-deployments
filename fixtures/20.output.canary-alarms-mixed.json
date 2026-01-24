@@ -361,6 +361,11 @@
               "Name": {
                 "Ref": "ExistingAlarm"
               }
+            },
+            {
+              "Name": {
+                "Ref": "CanaryDeploymentCompositeAlarm"
+              }
             }
           ],
           "Enabled": true

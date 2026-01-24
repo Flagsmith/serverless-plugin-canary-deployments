@@ -290,6 +290,11 @@
           "Alarms": [
             {
               "Name": "canary-deployments-test-prod-global-canary-composite"
+            },
+            {
+              "Name": {
+                "Ref": "CanaryDeploymentCompositeAlarm"
+              }
             }
           ],
           "Enabled": true
