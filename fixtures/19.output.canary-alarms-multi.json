@@ -499,7 +499,7 @@
         "DatapointsToAlarm": 1,
         "Threshold": 1000,
         "ComparisonOperator": "GreaterThanThreshold",
-        "TreatMissingData": "missing"
+        "TreatMissingData": "notBreaching"
       }
     },
     "WorldLambdaFunctionCanaryerrorsAlarm": {
@@ -548,7 +548,7 @@
         "DatapointsToAlarm": 1,
         "Threshold": 1000,
         "ComparisonOperator": "GreaterThanThreshold",
-        "TreatMissingData": "missing"
+        "TreatMissingData": "notBreaching"
       }
     },
     "CanaryDeploymentCompositeAlarm": {

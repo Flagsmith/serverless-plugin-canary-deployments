@@ -369,7 +369,7 @@
         "DatapointsToAlarm": 1,
         "Threshold": 5000,
         "ComparisonOperator": "GreaterThanThreshold",
-        "TreatMissingData": "missing"
+        "TreatMissingData": "notBreaching"
       }
     },
     "CanaryDeploymentCompositeAlarm": {
