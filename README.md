@@ -11,7 +11,6 @@ A Serverless plugin to implement canary deployments of Lambda functions, making 
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [Canary Alarms](#canary-alarms)
-- [Cross-Region Orchestration](#cross-region-orchestration)
 - [How it works](#how)
 - [Limitations](#limitations)
 - [License](#license)
@@ -252,12 +251,12 @@ The `errors` preset creates an alarm with these defaults:
 | metric             | Errors               |
 | namespace          | AWS/Lambda           |
 | statistic          | Sum                  |
-| period             | 300                  |
-| evaluationPeriods  | 2                    |
+| period             | 60                   |
+| evaluationPeriods  | 1                    |
 | datapointsToAlarm  | 1                    |
 | threshold          | 1000                 |
 | comparisonOperator | GreaterThanThreshold |
-| treatMissingData   | missing              |
+| treatMissingData   | notBreaching         |
 
 ### Custom Alarm Properties
 
@@ -268,10 +267,10 @@ The `errors` preset creates an alarm with these defaults:
 | `threshold`          | number | required               | Alarm threshold value         |
 | `comparisonOperator` | string | `GreaterThanThreshold` | Comparison operator           |
 | `statistic`          | string | `Sum`                  | Metric statistic              |
-| `period`             | number | `300`                  | Period in seconds             |
-| `evaluationPeriods`  | number | `2`                    | Number of periods to evaluate |
+| `period`             | number | `60`                   | Period in seconds             |
+| `evaluationPeriods`  | number | `1`                    | Number of periods to evaluate |
 | `datapointsToAlarm`  | number | `1`                    | Datapoints to trigger alarm   |
-| `treatMissingData`   | string | `missing`              | How to treat missing data     |
+| `treatMissingData`   | string | `notBreaching`         | How to treat missing data     |
 
 ### Generated Resources
 
@@ -293,69 +292,9 @@ functions:
       type: Canary10Percent5Minutes
       alias: Live
       alarms:
-        - name: my-global-composite-alarm    # External alarm (e.g., cross-region)
+        - name: my-existing-alarm
       canaryAlarms:
         - type: errors                        # Version-specific alarm
-```
-
-## <a name="cross-region-orchestration"></a>Cross-Region Orchestration
-
-For multi-region deployments where you want stack-wide rollback across ALL regions when any region's canary fails.
-
-### Prerequisites
-
-- CloudWatch OAM (Observability Access Manager) links configured between regions
-- A "global" composite alarm in a central/monitoring region
-
-### Stack Composite Naming Convention
-
-The plugin creates a stack composite alarm with a **predictable name**:
-
-```
-${service}-${stage}-canary-composite
-```
-
-Full ARN pattern:
-```
-arn:aws:cloudwatch:${region}:${accountId}:alarm:${service}-${stage}-canary-composite
-```
-
-### Setting Up OAM
-
-1. **Create an OAM Sink** in your monitoring region
-2. **Create OAM Links** from each source region to the sink
-3. **Create a Global Composite Alarm** that references all regional stack composites
-
-See [AWS CloudWatch OAM documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) for detailed setup instructions.
-
-### Global Composite Alarm Example
-
-```yaml
-GlobalCanaryComposite:
-  Type: AWS::CloudWatch::CompositeAlarm
-  Properties:
-    AlarmName: my-service-prod-global-canary-composite
-    AlarmDescription: "Triggers if any region's canary deployment has errors"
-    AlarmRule: |
-      ALARM("arn:aws:cloudwatch:us-east-1:123456789:alarm:my-service-prod-canary-composite") OR
-      ALARM("arn:aws:cloudwatch:eu-west-1:123456789:alarm:my-service-prod-canary-composite") OR
-      ALARM("arn:aws:cloudwatch:ap-southeast-1:123456789:alarm:my-service-prod-canary-composite")
-```
-
-### Referencing the Global Composite
-
-Once set up, reference the global composite in your serverless.yml:
-
-```yaml
-functions:
-  hello:
-    deploymentSettings:
-      type: Canary10Percent5Minutes
-      alias: Live
-      alarms:
-        - name: my-service-prod-global-canary-composite   # Cross-region rollback
-      canaryAlarms:
-        - type: errors
 ```
 
 ## <a name="how"></a>How it works
