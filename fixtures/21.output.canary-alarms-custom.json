@@ -327,7 +327,7 @@
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {
         "AlarmName": {
-          "Fn::Sub": "canary-deployments-test-dev-hello-canary-duration"
+          "Fn::Sub": "canary-deployments-test-dev-hello-canary-duration-v${HelloLambdaVersionABC123.Version}"
         },
         "AlarmDescription": "Canary alarm for HelloLambdaFunction function",
         "MetricName": "Duration",

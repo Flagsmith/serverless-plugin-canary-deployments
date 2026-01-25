@@ -457,7 +457,7 @@
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {
         "AlarmName": {
-          "Fn::Sub": "canary-deployments-test-dev-hello-canary-errors"
+          "Fn::Sub": "canary-deployments-test-dev-hello-canary-errors-v${HelloLambdaVersionABC123.Version}"
         },
         "AlarmDescription": "Canary alarm for HelloLambdaFunction function",
         "MetricName": "Errors",
@@ -506,7 +506,7 @@
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {
         "AlarmName": {
-          "Fn::Sub": "canary-deployments-test-dev-world-canary-errors"
+          "Fn::Sub": "canary-deployments-test-dev-world-canary-errors-v${WorldLambdaVersionDEF456.Version}"
         },
         "AlarmDescription": "Canary alarm for WorldLambdaFunction function",
         "MetricName": "Errors",
