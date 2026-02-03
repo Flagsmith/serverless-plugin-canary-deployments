@@ -13,7 +13,7 @@
         "alias": "Live",
         "canaryAlarms": [
           {
-            "type": "errors"
+            "preset": "errors"
           }
         ]
       }

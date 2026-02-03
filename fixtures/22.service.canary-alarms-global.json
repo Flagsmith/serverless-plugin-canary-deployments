@@ -10,7 +10,7 @@
         "alarms": [
           { "name": "canary-deployments-test-prod-global-canary-composite" }
         ],
-        "canaryAlarms": [{ "type": "errors" }]
+        "canaryAlarms": [{ "preset": "errors" }]
       }
     }
   }

@@ -10,7 +10,7 @@
             "type": "object",
             "properties": {
               "type": {
-                "type": "string",
+                "preset": "string",
                 "enum": ["errors"],
                 "description": "Preset alarm type"
               },

@@ -7,7 +7,7 @@
       "deploymentSettings": {
         "type": "Linear10PercentEvery1Minute",
         "alias": "Live",
-        "canaryAlarms": [{ "type": "errors" }]
+        "canaryAlarms": [{ "preset": "errors" }]
       }
     },
     "world": {
@@ -16,7 +16,7 @@
       "deploymentSettings": {
         "type": "Linear10PercentEvery1Minute",
         "alias": "Live",
-        "canaryAlarms": [{ "type": "errors" }]
+        "canaryAlarms": [{ "preset": "errors" }]
       }
     }
   }

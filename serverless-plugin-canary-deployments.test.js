@@ -103,7 +103,7 @@ describe('ServerlessCanaryDeployments', () => {
             deploymentSettings: {
               type: 'Linear10PercentEvery1Minute',
               alias: 'Live',
-              canaryAlarms: [{ type: 'errors' }]
+              canaryAlarms: [{ preset: 'errors' }]
             }
           }
         }
@@ -165,7 +165,7 @@ describe('ServerlessCanaryDeployments', () => {
             deploymentSettings: {
               type: 'Linear10PercentEvery1Minute',
               alias: 'Live',
-              canaryAlarms: [{ type: 'errors' }]
+              canaryAlarms: [{ preset: 'errors' }]
             }
           },
           world: {
@@ -173,7 +173,7 @@ describe('ServerlessCanaryDeployments', () => {
             deploymentSettings: {
               type: 'Linear10PercentEvery1Minute',
               alias: 'Live',
-              canaryAlarms: [{ type: 'errors' }]
+              canaryAlarms: [{ preset: 'errors' }]
             }
           }
         }
@@ -210,7 +210,7 @@ describe('ServerlessCanaryDeployments', () => {
             deploymentSettings: {
               type: 'Linear10PercentEvery1Minute',
               alias: 'Live',
-              canaryAlarms: [{ type: 'errors' }]
+              canaryAlarms: [{ preset: 'errors' }]
             }
           },
           world: {
@@ -252,7 +252,7 @@ describe('ServerlessCanaryDeployments', () => {
               type: 'Linear10PercentEvery1Minute',
               alias: 'Live',
               alarms: ['ExistingAlarm1', { name: 'ExistingAlarm2' }],
-              canaryAlarms: [{ type: 'errors' }]
+              canaryAlarms: [{ preset: 'errors' }]
             }
           }
         }
@@ -287,7 +287,7 @@ describe('ServerlessCanaryDeployments', () => {
             deploymentSettings: {
               type: 'Linear10PercentEvery1Minute',
               alias: 'Live',
-              canaryAlarms: [{ type: 'errors' }]
+              canaryAlarms: [{ preset: 'errors' }]
             }
           }
         }
@@ -314,7 +314,7 @@ describe('ServerlessCanaryDeployments', () => {
             deploymentSettings: {
               type: 'Linear10PercentEvery1Minute',
               alias: 'Live',
-              canaryAlarms: [{ type: 'errors' }]
+              canaryAlarms: [{ preset: 'errors' }]
             }
           }
         }
@@ -343,7 +343,7 @@ describe('ServerlessCanaryDeployments', () => {
             deploymentSettings: {
               type: 'Linear10PercentEvery1Minute',
               alias: 'Live',
-              canaryAlarms: [{ type: 'errors' }]
+              canaryAlarms: [{ preset: 'errors' }]
             }
           },
           world: {

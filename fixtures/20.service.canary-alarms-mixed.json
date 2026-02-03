@@ -8,7 +8,7 @@
         "type": "Linear10PercentEvery1Minute",
         "alias": "Live",
         "alarms": ["ExistingAlarm"],
-        "canaryAlarms": [{ "type": "errors" }]
+        "canaryAlarms": [{ "preset": "errors" }]
       }
     },
     "world": {

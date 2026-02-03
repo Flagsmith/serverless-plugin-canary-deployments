@@ -540,7 +540,7 @@ class ServerlessCanaryDeployments {
   }
 
   buildCanaryAlarm ({ serverlessFunctionName, functionName, versionName, aliasName, alarmConfig }) {
-    const metricName = alarmConfig.type || alarmConfig.metric || 'unknown'
+    const metricName = alarmConfig.preset || alarmConfig.metric || 'unknown'
     const normalizedMetric = metricName.toLowerCase().replace(/[^a-z0-9]/g, '')
     const normalizedFnName = serverlessFunctionName.toLowerCase().replace(/[^a-z0-9]/g, '')
     const alarmName = `${normalizedFnName}-canary-${normalizedMetric}`
