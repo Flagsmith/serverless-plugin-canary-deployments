@@ -88,7 +88,6 @@ cloudwatch:PutMetricAlarm
 cloudwatch:DeleteAlarms
 cloudwatch:DescribeAlarms
 cloudwatch:PutCompositeAlarm
-cloudwatch:DeleteAlarms
 ```
 
 ### Service-specific permissions
