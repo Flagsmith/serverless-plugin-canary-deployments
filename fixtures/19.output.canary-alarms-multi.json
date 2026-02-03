@@ -453,7 +453,7 @@
         }
       }
     },
-    "HelloLambdaFunctionCanaryerrorsAlarm": {
+    "HelloLambdaFunctionCanaryErrorsAlarm": {
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {
         "AlarmName": {
@@ -502,7 +502,7 @@
         "TreatMissingData": "notBreaching"
       }
     },
-    "WorldLambdaFunctionCanaryerrorsAlarm": {
+    "WorldLambdaFunctionCanaryErrorsAlarm": {
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {
         "AlarmName": {
@@ -559,7 +559,7 @@
         },
         "AlarmDescription": "Stack composite alarm for canary deployments",
         "AlarmRule": {
-          "Fn::Sub": "ALARM(${HelloLambdaFunctionCanaryerrorsAlarm}) OR ALARM(${WorldLambdaFunctionCanaryerrorsAlarm})"
+          "Fn::Sub": "ALARM(${HelloLambdaFunctionCanaryErrorsAlarm}) OR ALARM(${WorldLambdaFunctionCanaryErrorsAlarm})"
         }
       }
     }

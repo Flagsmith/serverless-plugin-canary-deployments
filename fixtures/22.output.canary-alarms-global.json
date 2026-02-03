@@ -326,7 +326,7 @@
         }
       }
     },
-    "HelloLambdaFunctionCanaryerrorsAlarm": {
+    "HelloLambdaFunctionCanaryErrorsAlarm": {
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {
         "AlarmName": {
@@ -383,7 +383,7 @@
         },
         "AlarmDescription": "Stack composite alarm for canary deployments",
         "AlarmRule": {
-          "Fn::Sub": "ALARM(${HelloLambdaFunctionCanaryerrorsAlarm})"
+          "Fn::Sub": "ALARM(${HelloLambdaFunctionCanaryErrorsAlarm})"
         }
       }
     }

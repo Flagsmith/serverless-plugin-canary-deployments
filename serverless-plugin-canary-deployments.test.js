@@ -300,7 +300,7 @@ describe('ServerlessCanaryDeployments', () => {
 
       // Then
       const logicalIds = resources.map(r => Object.keys(r)[0])
-      expect(logicalIds).to.include('HelloLambdaFunctionCanaryerrorsAlarm')
+      expect(logicalIds).to.include('HelloLambdaFunctionCanaryErrorsAlarm')
       expect(logicalIds).to.include('CanaryDeploymentCompositeAlarm')
     })
 
@@ -365,12 +365,12 @@ describe('ServerlessCanaryDeployments', () => {
       // Then
       expect(resources).to.have.length(2) // hello's alarm + composite
       const logicalIds = resources.map(r => Object.keys(r)[0])
-      expect(logicalIds).to.include('HelloLambdaFunctionCanaryerrorsAlarm')
-      expect(logicalIds).to.not.include('WorldLambdaFunctionCanaryerrorsAlarm')
+      expect(logicalIds).to.include('HelloLambdaFunctionCanaryErrorsAlarm')
+      expect(logicalIds).to.not.include('WorldLambdaFunctionCanaryErrorsAlarm')
 
       const compositeResource = resources.find(r => Object.keys(r)[0] === 'CanaryDeploymentCompositeAlarm')
       const alarmRule = compositeResource.CanaryDeploymentCompositeAlarm.Properties.AlarmRule['Fn::Sub']
-      expect(alarmRule).to.include('HelloLambdaFunctionCanaryerrorsAlarm')
+      expect(alarmRule).to.include('HelloLambdaFunctionCanaryErrorsAlarm')
       expect(alarmRule).to.not.include('World')
     })
   })

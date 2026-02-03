@@ -544,7 +544,8 @@ class ServerlessCanaryDeployments {
     const normalizedMetric = metricName.toLowerCase().replace(/[^a-z0-9]/g, '')
     const normalizedFnName = serverlessFunctionName.toLowerCase().replace(/[^a-z0-9]/g, '')
     const alarmName = `${normalizedFnName}-canary-${normalizedMetric}`
-    const logicalId = `${functionName}Canary${metricName}Alarm`
+    const capitalizedMetric = metricName.charAt(0).toUpperCase() + metricName.slice(1)
+    const logicalId = `${functionName}Canary${capitalizedMetric}Alarm`
 
     const template = CfGenerators.cloudWatch.buildCanaryAlarm({
       alarmName,
