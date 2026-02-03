@@ -217,7 +217,7 @@ functions:
       type: Canary10Percent5Minutes
       alias: Live
       canaryAlarms:
-        - type: errors    # Use preset configuration
+        - preset: errors    # Use preset configuration
 ```
 
 ### Configuration
@@ -227,8 +227,8 @@ functions:
 **Using a preset:**
 ```yaml
 canaryAlarms:
-  - type: errors              # Use 'errors' preset
-  - type: errors              # Override preset values
+  - preset: errors            # Use 'errors' preset
+  - preset: errors            # Override preset values
     threshold: 5
 ```
 
@@ -257,19 +257,31 @@ The `errors` preset creates an alarm with these defaults:
 | comparisonOperator | GreaterThanThreshold |
 | treatMissingData   | notBreaching         |
 
-### Custom Alarm Properties
+### Alarm Properties
 
-| Property             | Type   | Default                | Description                   |
-| -------------------- | ------ | ---------------------- | ----------------------------- |
-| `type`               | string | -                      | Preset name (`errors`)        |
-| `metric`             | string | required               | CloudWatch metric name        |
-| `threshold`          | number | required               | Alarm threshold value         |
-| `comparisonOperator` | string | `GreaterThanThreshold` | Comparison operator           |
-| `statistic`          | string | `Sum`                  | Metric statistic              |
-| `period`             | number | `60`                   | Period in seconds             |
-| `evaluationPeriods`  | number | `1`                    | Number of periods to evaluate |
-| `datapointsToAlarm`  | number | `1`                    | Datapoints to trigger alarm   |
-| `treatMissingData`   | string | `notBreaching`         | How to treat missing data     |
+Each alarm in `canaryAlarms` must use **either** a preset or a custom metric configuration:
+
+**Preset-based alarm** (requires `preset`):
+
+| Property | Type   | Required | Description            |
+| -------- | ------ | -------- | ---------------------- |
+| `preset` | string | yes      | Preset name (`errors`) |
+
+Any other property below can be specified to override the preset defaults.
+
+**Custom metric alarm** (requires `metric` and `threshold`):
+
+| Property             | Type   | Required | Default                | Description                   |
+| -------------------- | ------ | -------- | ---------------------- | ----------------------------- |
+| `metric`             | string | yes      | -                      | CloudWatch metric name        |
+| `threshold`          | number | yes      | -                      | Alarm threshold value         |
+| `namespace`          | string | no       | `AWS/Lambda`           | CloudWatch namespace          |
+| `comparisonOperator` | string | no       | `GreaterThanThreshold` | Comparison operator           |
+| `statistic`          | string | no       | `Sum`                  | Metric statistic              |
+| `period`             | number | no       | `60`                   | Period in seconds             |
+| `evaluationPeriods`  | number | no       | `1`                    | Number of periods to evaluate |
+| `datapointsToAlarm`  | number | no       | `1`                    | Datapoints to trigger alarm   |
+| `treatMissingData`   | string | no       | `notBreaching`         | How to treat missing data     |
 
 ### Generated Resources
 
@@ -293,7 +305,7 @@ functions:
       alarms:
         - name: my-existing-alarm
       canaryAlarms:
-        - type: errors                        # Version-specific alarm
+        - preset: errors                      # Version-specific alarm
 ```
 
 ## <a name="how"></a>How it works

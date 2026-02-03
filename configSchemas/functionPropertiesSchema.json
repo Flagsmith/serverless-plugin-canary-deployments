@@ -20,6 +20,18 @@
                     "type": "number",
                     "description": "Override threshold value"
                   },
+                  "namespace": {
+                    "type": "string",
+                    "description": "Override CloudWatch namespace"
+                  },
+                  "comparisonOperator": {
+                    "type": "string",
+                    "description": "Override comparison operator"
+                  },
+                  "statistic": {
+                    "type": "string",
+                    "description": "Override metric statistic"
+                  },
                   "period": {
                     "type": "number",
                     "description": "Override period in seconds"
@@ -51,6 +63,10 @@
                     "type": "number",
                     "description": "Alarm threshold value"
                   },
+                  "namespace": {
+                    "type": "string",
+                    "description": "CloudWatch namespace"
+                  },
                   "comparisonOperator": {
                     "type": "string",
                     "description": "Comparison operator for the alarm"
@@ -74,10 +90,6 @@
                   "treatMissingData": {
                     "type": "string",
                     "description": "How to treat missing data"
-                  },
-                  "namespace": {
-                    "type": "string",
-                    "description": "CloudWatch namespace"
                   }
                 },
                 "required": ["metric", "threshold"],
