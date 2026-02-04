@@ -9,13 +9,17 @@ jobs:
     runs-on: ubuntu-latest
     name: Tests & Publish
 
+    permissions:
+      contents: read # For actions/checkout
+      id-token: write # For actions/setup-node to authenticate with npm registry
+
     steps:
       - name: Cloning repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
         id: setup-node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -28,6 +32,4 @@ jobs:
         run: npm run test
 
       - name: Publish package
-        run: npm login && npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public
