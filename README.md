@@ -7,8 +7,10 @@ A Serverless plugin to implement canary deployments of Lambda functions, making 
 ## Contents
 
 - [Installation](#installation)
+- [IAM Permissions](#iam-permissions)
 - [Usage](#usage)
 - [Configuration](#configuration)
+- [Canary Alarms](#canary-alarms)
 - [How it works](#how)
 - [Limitations](#limitations)
 - [License](#license)
@@ -16,6 +18,108 @@ A Serverless plugin to implement canary deployments of Lambda functions, making 
 ## <a name="installation"></a>Installation
 
 `npm i --save-dev @flagsmith/serverless-plugin-canary-deployments`
+
+## <a name="iam-permissions"></a>IAM Permissions
+
+This plugin creates and manages several AWS resources. The IAM user or role deploying your Serverless service needs the following permissions:
+
+### CloudFormation
+
+```
+cloudformation:CreateStack
+cloudformation:UpdateStack
+cloudformation:DeleteStack
+cloudformation:DescribeStacks
+cloudformation:DescribeStackEvents
+cloudformation:DescribeStackResource
+cloudformation:GetTemplate
+cloudformation:ValidateTemplate
+```
+
+### CodeDeploy
+
+```
+codedeploy:CreateApplication
+codedeploy:DeleteApplication
+codedeploy:GetApplication
+codedeploy:CreateDeploymentGroup
+codedeploy:DeleteDeploymentGroup
+codedeploy:UpdateDeploymentGroup
+codedeploy:GetDeploymentGroup
+codedeploy:CreateDeployment
+codedeploy:GetDeployment
+codedeploy:StopDeployment
+```
+
+### Lambda
+
+```
+lambda:CreateAlias
+lambda:DeleteAlias
+lambda:UpdateAlias
+lambda:GetAlias
+lambda:GetFunction
+lambda:GetFunctionConfiguration
+lambda:PublishVersion
+lambda:ListVersionsByFunction
+lambda:UpdateFunctionCode
+lambda:UpdateFunctionConfiguration
+lambda:AddPermission
+lambda:RemovePermission
+```
+
+### IAM
+
+```
+iam:CreateRole
+iam:DeleteRole
+iam:GetRole
+iam:PassRole
+iam:AttachRolePolicy
+iam:DetachRolePolicy
+iam:PutRolePolicy
+iam:DeleteRolePolicy
+```
+
+### CloudWatch (for alarms)
+
+```
+cloudwatch:PutMetricAlarm
+cloudwatch:DeleteAlarms
+cloudwatch:DescribeAlarms
+cloudwatch:PutCompositeAlarm
+```
+
+### Service-specific permissions
+
+Depending on which event sources trigger your Lambda functions, you may also need:
+
+| Event Source | Permissions |
+| --- | --- |
+| API Gateway | `apigateway:*` on your API resources |
+| SNS | `sns:Subscribe`, `sns:Unsubscribe` |
+| S3 | `s3:PutBucketNotification` |
+| CloudWatch Events | `events:PutRule`, `events:PutTargets`, `events:RemoveTargets`, `events:DeleteRule` |
+| CloudWatch Logs | `logs:PutSubscriptionFilter`, `logs:DeleteSubscriptionFilter` |
+| IoT | `iot:CreateTopicRule`, `iot:ReplaceTopicRule`, `iot:DeleteTopicRule` |
+| AppSync | `appsync:UpdateDataSource` |
+| ALB/NLB | `elasticloadbalancing:RegisterTargets`, `elasticloadbalancing:DeregisterTargets` |
+
+### CodeDeploy Service Role
+
+The plugin creates a CodeDeploy service role with the following managed policies attached:
+- `arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForLambdaLimited`
+- `arn:aws:iam::aws:policy/AWSLambda_FullAccess`
+
+If you provide your own `codeDeployRole`, ensure it has equivalent permissions. See [example-code-deploy-policy.json](./example-code-deploy-policy.json) for reference.
+
+### Lambda Execution Role
+
+For pre/post traffic hooks to report deployment status, the plugin adds this permission to your Lambda execution role:
+
+```
+codedeploy:PutLifecycleEventHookExecutionStatus
+```
 
 ## <a name="usage"></a>Usage
 
@@ -98,6 +202,111 @@ Some values are only available as top-level configurations.  They are:
 * `codeDeployRole`: (optional) an ARN specifying an existing IAM role for CodeDeploy.  If absent, one will be created for you.  See the [codeDeploy policy](./example-code-deploy-policy.json) for an example of what is needed.
 * `codeDeployRolePermissionsBoundary`: (optional) an ARN specifying an existing IAM permissions boundary, this permission boundary is set on the code deploy that is being created when codeDeployRole is not defined.
 * `stages`: (optional) list of stages where you want to deploy your functions gradually. If not present, it assumes that are all of them.
+
+## <a name="canary-alarms"></a>Canary Alarms
+
+Canary alarms are version-specific CloudWatch alarms that monitor only the **new Lambda version** during deployment. This solves the "pre-existing alarm" problem where a deployment fails because the previous version's errors keep an alarm in ALARM state.
+
+`canaryAlarms` creates CloudWatch alarms with the `ExecutedVersion` dimension, which only monitors metrics from the specific Lambda version being deployed.
+
+```yaml
+functions:
+  hello:
+    handler: handler.hello
+    deploymentSettings:
+      type: Canary10Percent5Minutes
+      alias: Live
+      canaryAlarms:
+        - preset: errors    # Use preset configuration
+```
+
+### Configuration
+
+* `canaryAlarms`: (optional) list of version-specific CloudWatch alarms to create. Each alarm can be:
+
+**Using a preset:**
+```yaml
+canaryAlarms:
+  - preset: errors            # Use 'errors' preset
+  - preset: errors            # Override preset values
+    threshold: 5
+```
+
+**Using custom configuration:**
+```yaml
+canaryAlarms:
+  - metric: Duration
+    threshold: 5000
+    comparisonOperator: GreaterThanThreshold
+    statistic: Average
+```
+
+### Preset: `errors`
+
+The `errors` preset creates an alarm with these defaults:
+
+| Property           | Value                |
+| ------------------ | -------------------- |
+| metric             | Errors               |
+| namespace          | AWS/Lambda           |
+| statistic          | Sum                  |
+| period             | 60                   |
+| evaluationPeriods  | 1                    |
+| datapointsToAlarm  | 1                    |
+| threshold          | 1000                 |
+| comparisonOperator | GreaterThanThreshold |
+| treatMissingData   | notBreaching         |
+
+### Alarm Properties
+
+Each alarm in `canaryAlarms` must use **either** a preset or a custom metric configuration:
+
+**Preset-based alarm** (requires `preset`):
+
+| Property | Type   | Required | Description            |
+| -------- | ------ | -------- | ---------------------- |
+| `preset` | string | yes      | Preset name (`errors`) |
+
+Any other property below can be specified to override the preset defaults.
+
+**Custom metric alarm** (requires `metric` and `threshold`):
+
+| Property             | Type   | Required | Default                | Description                   |
+| -------------------- | ------ | -------- | ---------------------- | ----------------------------- |
+| `metric`             | string | yes      | -                      | CloudWatch metric name        |
+| `threshold`          | number | yes      | -                      | Alarm threshold value         |
+| `namespace`          | string | no       | `AWS/Lambda`           | CloudWatch namespace          |
+| `comparisonOperator` | string | no       | `GreaterThanThreshold` | Comparison operator           |
+| `statistic`          | string | no       | `Sum`                  | Metric statistic              |
+| `period`             | number | no       | `60`                   | Period in seconds             |
+| `evaluationPeriods`  | number | no       | `1`                    | Number of periods to evaluate |
+| `datapointsToAlarm`  | number | no       | `1`                    | Datapoints to trigger alarm   |
+| `treatMissingData`   | string | no       | `notBreaching`         | How to treat missing data     |
+
+### Generated Resources
+
+When you configure `canaryAlarms`, the plugin generates:
+
+1. **Per-function canary alarms** with the `ExecutedVersion` dimension
+2. **A stack composite alarm** that fires if ANY function's canary alarm fires
+
+The composite alarm uses a predictable name: `${service}-${stage}-canary-composite`
+
+### Using with Standard Alarms
+
+You can use both `alarms` and `canaryAlarms` together:
+
+```yaml
+functions:
+  hello:
+    deploymentSettings:
+      type: Canary10Percent5Minutes
+      alias: Live
+      alarms:
+        - name: my-existing-alarm
+      canaryAlarms:
+        - preset: errors                      # Version-specific alarm
+```
 
 ## <a name="how"></a>How it works
 

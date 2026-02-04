@@ -59,12 +59,14 @@ class ServerlessCanaryDeployments {
       const functionsResources = this.buildFunctionsResources()
       const codeDeployRole = this.buildCodeDeployRole(this.areTriggerConfigurationsSet(functionsResources))
       const executionRole = this.buildExecutionRole()
+      const canaryAlarmResources = this.buildCanaryAlarmResources()
       Object.assign(
         this.compiledTpl.Resources,
         codeDeployApp,
         codeDeployRole,
         executionRole,
-        ...functionsResources
+        ...functionsResources,
+        ...canaryAlarmResources
       )
     }
   }
@@ -170,14 +172,29 @@ class ServerlessCanaryDeployments {
   buildFunctionDeploymentGroup ({ deploymentSettings, functionName }) {
     const logicalName = this.getFunctionDeploymentGroupId(functionName)
     const codeDeployGroupName = this.getDeploymentGroupName(logicalName)
+
+    // If canaryAlarms is configured, add the composite alarm to the alarms array
+    const effectiveSettings = this.addCanaryAlarmToDeploymentSettings(deploymentSettings)
+
     const params = {
       codeDeployAppName: this.codeDeployAppName,
       codeDeployGroupName,
-      codeDeployRoleArn: deploymentSettings.codeDeployRole,
-      deploymentSettings
+      codeDeployRoleArn: effectiveSettings.codeDeployRole,
+      deploymentSettings: effectiveSettings
     }
     const template = CfGenerators.codeDeploy.buildFnDeploymentGroup(params)
     return { [logicalName]: template }
+  }
+
+  addCanaryAlarmToDeploymentSettings (deploymentSettings) {
+    if (!deploymentSettings.canaryAlarms || deploymentSettings.canaryAlarms.length === 0) {
+      return deploymentSettings
+    }
+
+    const existingAlarms = deploymentSettings.alarms || []
+    const alarmsWithCanary = [...existingAlarms, 'CanaryDeploymentCompositeAlarm']
+
+    return Object.assign({}, deploymentSettings, { alarms: alarmsWithCanary })
   }
 
   buildFunctionAlias ({ deploymentSettings = {}, functionName, deploymentGroup, targetAlias }) {
@@ -479,6 +496,84 @@ class ServerlessCanaryDeployments {
   getDeploymentSettingsFor (serverlessFunctionName) {
     const fnDeploymentSetting = this.service.getFunction(serverlessFunctionName).deploymentSettings
     return Object.assign({}, this.globalSettings, fnDeploymentSetting)
+  }
+
+  get serviceName () {
+    return this.service.service
+  }
+
+  get functionsWithCanaryAlarms () {
+    return this.withDeploymentPreferencesFns.filter(name => {
+      const settings = this.getDeploymentSettingsFor(name)
+      return settings.canaryAlarms && settings.canaryAlarms.length > 0
+    })
+  }
+
+  buildCanaryAlarmResources () {
+    const resources = []
+    const allCanaryAlarmLogicalIds = []
+
+    for (const serverlessFunctionName of this.functionsWithCanaryAlarms) {
+      const functionName = this.naming.getLambdaLogicalId(serverlessFunctionName)
+      const versionName = this.getVersionNameFor(functionName)
+      const deploymentSettings = this.getDeploymentSettingsFor(serverlessFunctionName)
+
+      for (const alarmConfig of deploymentSettings.canaryAlarms) {
+        const alarmResult = this.buildCanaryAlarm({
+          serverlessFunctionName,
+          functionName,
+          versionName,
+          aliasName: deploymentSettings.alias,
+          alarmConfig
+        })
+        resources.push(alarmResult.resource)
+        allCanaryAlarmLogicalIds.push(alarmResult.logicalId)
+      }
+    }
+
+    if (allCanaryAlarmLogicalIds.length > 0) {
+      const compositeAlarm = this.buildCanaryCompositeAlarm(allCanaryAlarmLogicalIds)
+      resources.push(compositeAlarm)
+    }
+
+    return resources
+  }
+
+  buildCanaryAlarm ({ serverlessFunctionName, functionName, versionName, aliasName, alarmConfig }) {
+    const metricName = alarmConfig.preset || alarmConfig.metric || 'unknown'
+    const normalizedMetric = metricName.toLowerCase().replace(/[^a-z0-9]/g, '')
+    const normalizedFnName = serverlessFunctionName.toLowerCase().replace(/[^a-z0-9]/g, '')
+    const alarmName = `${normalizedFnName}-canary-${normalizedMetric}`
+    const capitalizedMetric = normalizedMetric.charAt(0).toUpperCase() + normalizedMetric.slice(1)
+    const logicalId = `${functionName}Canary${capitalizedMetric}Alarm`
+
+    const template = CfGenerators.cloudWatch.buildCanaryAlarm({
+      alarmName,
+      functionName,
+      functionRef: functionName,
+      versionName,
+      aliasName,
+      alarmConfig,
+      serviceName: this.serviceName,
+      stage: this.currentStage
+    })
+
+    return {
+      logicalId,
+      resource: { [logicalId]: template }
+    }
+  }
+
+  buildCanaryCompositeAlarm (alarmLogicalIds) {
+    const logicalId = 'CanaryDeploymentCompositeAlarm'
+    const template = CfGenerators.cloudWatch.buildCompositeAlarm({
+      alarmName: 'canary-composite',
+      alarmLogicalIds,
+      serviceName: this.serviceName,
+      stage: this.currentStage
+    })
+
+    return { [logicalId]: template }
   }
 }
 

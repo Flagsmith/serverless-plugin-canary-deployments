@@ -2,7 +2,103 @@
   "type": "object",
   "properties": {
     "deploymentSettings": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "canaryAlarms": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "preset": {
+                    "type": "string",
+                    "enum": ["errors"],
+                    "description": "Preset alarm configuration"
+                  },
+                  "threshold": {
+                    "type": "number",
+                    "description": "Override threshold value"
+                  },
+                  "namespace": {
+                    "type": "string",
+                    "description": "Override CloudWatch namespace"
+                  },
+                  "comparisonOperator": {
+                    "type": "string",
+                    "description": "Override comparison operator"
+                  },
+                  "statistic": {
+                    "type": "string",
+                    "description": "Override metric statistic"
+                  },
+                  "period": {
+                    "type": "number",
+                    "description": "Override period in seconds"
+                  },
+                  "evaluationPeriods": {
+                    "type": "number",
+                    "description": "Override number of periods to evaluate"
+                  },
+                  "datapointsToAlarm": {
+                    "type": "number",
+                    "description": "Override datapoints required to trigger alarm"
+                  },
+                  "treatMissingData": {
+                    "type": "string",
+                    "description": "Override how to treat missing data"
+                  }
+                },
+                "required": ["preset"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "metric": {
+                    "type": "string",
+                    "description": "CloudWatch metric name"
+                  },
+                  "threshold": {
+                    "type": "number",
+                    "description": "Alarm threshold value"
+                  },
+                  "namespace": {
+                    "type": "string",
+                    "description": "CloudWatch namespace"
+                  },
+                  "comparisonOperator": {
+                    "type": "string",
+                    "description": "Comparison operator for the alarm"
+                  },
+                  "statistic": {
+                    "type": "string",
+                    "description": "Metric statistic (Sum, Average, etc.)"
+                  },
+                  "period": {
+                    "type": "number",
+                    "description": "Period in seconds"
+                  },
+                  "evaluationPeriods": {
+                    "type": "number",
+                    "description": "Number of periods to evaluate"
+                  },
+                  "datapointsToAlarm": {
+                    "type": "number",
+                    "description": "Datapoints required to trigger alarm"
+                  },
+                  "treatMissingData": {
+                    "type": "string",
+                    "description": "How to treat missing data"
+                  }
+                },
+                "required": ["metric", "threshold"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
     }
   }
 }
