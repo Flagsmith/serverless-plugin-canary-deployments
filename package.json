@@ -33,7 +33,7 @@
     "get-installed-path": "^4.0.8",
     "husky": "^3.0.1",
     "mocha": "^11.7.5",
-    "serverless": "^3.39.0",
+    "serverless": "^4.31.2",
     "standard": "*"
   },
   "peerDependencies": {
