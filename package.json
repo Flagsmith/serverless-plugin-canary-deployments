@@ -20,7 +20,7 @@
   ],
   "license": "ISC",
   "repository": {
-    "url": "https://github.com/flagsmith/serverless-plugin-canary-deployments.git",
+    "url": "https://github.com/Flagsmith/serverless-plugin-canary-deployments.git",
     "type": "git"
   },
   "dependencies": {
