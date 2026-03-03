@@ -283,6 +283,46 @@ Any other property below can be specified to override the preset defaults.
 | `datapointsToAlarm`  | number | no       | `1`                    | Datapoints to trigger alarm   |
 | `treatMissingData`   | string | no       | `notBreaching`         | How to treat missing data     |
 
+**Metric math alarm** (requires `metrics`, `expression`, and `threshold`):
+
+Use [CloudWatch Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html) to combine multiple metrics in a single alarm — for example, to alarm on error rate rather than absolute error count:
+
+```yaml
+canaryAlarms:
+  - name: errorrate
+    metrics:
+      - id: errors
+        metric: Errors
+        statistic: Sum
+      - id: invocations
+        metric: Invocations
+        statistic: Sum
+    expression: "errors / invocations"
+    threshold: 0.05
+    comparisonOperator: GreaterThanThreshold
+```
+
+| Property             | Type   | Required | Default                | Description                                                  |
+| -------------------- | ------ | -------- | ---------------------- | ------------------------------------------------------------ |
+| `name`               | string | no       | -                      | Logical name (used in CloudFormation logical ID)             |
+| `metrics`            | array  | yes      | -                      | List of metrics to use in the expression                     |
+| `expression`         | string | yes      | -                      | Metric math expression referencing metric IDs                |
+| `threshold`          | number | yes      | -                      | Alarm threshold value (can be a float)                       |
+| `namespace`          | string | no       | `AWS/Lambda`           | CloudWatch namespace for all metrics                         |
+| `comparisonOperator` | string | no       | `GreaterThanThreshold` | Comparison operator                                          |
+| `period`             | number | no       | `60`                   | Period in seconds for all metrics                            |
+| `evaluationPeriods`  | number | no       | `1`                    | Number of periods to evaluate                                |
+| `datapointsToAlarm`  | number | no       | `1`                    | Datapoints to trigger alarm                                  |
+| `treatMissingData`   | string | no       | `notBreaching`         | How to treat missing data                                    |
+
+Each entry in `metrics` has:
+
+| Property    | Type   | Required | Description                                     |
+| ----------- | ------ | -------- | ----------------------------------------------- |
+| `id`        | string | yes      | Unique ID referenced in the expression          |
+| `metric`    | string | yes      | CloudWatch metric name                          |
+| `statistic` | string | yes      | Metric statistic (`Sum`, `Average`, etc.)       |
+
 ### Generated Resources
 
 When you configure `canaryAlarms`, the plugin generates:

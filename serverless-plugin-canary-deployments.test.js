@@ -373,5 +373,107 @@ describe('ServerlessCanaryDeployments', () => {
       expect(alarmRule).to.include('HelloLambdaFunctionCanaryErrorsAlarm')
       expect(alarmRule).to.not.include('World')
     })
+
+    it('returns correct logical ID for metric math alarm with name', () => {
+      // Given
+      const service = {
+        service: 'my-service',
+        functions: {
+          hello: {
+            handler: 'handler.hello',
+            deploymentSettings: {
+              type: 'Linear10PercentEvery1Minute',
+              alias: 'Live',
+              canaryAlarms: [{
+                name: 'durationcheck',
+                metrics: [
+                  { id: 'errors', metric: 'Errors', statistic: 'Sum' },
+                  { id: 'invocations', metric: 'Invocations', statistic: 'Sum' }
+                ],
+                expression: 'errors / invocations',
+                threshold: 0.05
+              }]
+            }
+          }
+        }
+      }
+      const serverless = createMockServerless(service)
+      const plugin = new ServerlessCanaryDeployments(serverless, { stage: 'dev' })
+
+      // When
+      const resources = plugin.buildCanaryAlarmResources()
+
+      // Then
+      const logicalIds = resources.map(r => Object.keys(r)[0])
+      expect(logicalIds).to.include('HelloLambdaFunctionCanaryDurationcheckAlarm')
+      expect(logicalIds).to.include('CanaryDeploymentCompositeAlarm')
+    })
+
+    it('returns fallback logical ID for metric math alarm without name', () => {
+      // Given
+      const service = {
+        service: 'my-service',
+        functions: {
+          hello: {
+            handler: 'handler.hello',
+            deploymentSettings: {
+              type: 'Linear10PercentEvery1Minute',
+              alias: 'Live',
+              canaryAlarms: [{
+                metrics: [
+                  { id: 'errors', metric: 'Errors', statistic: 'Sum' }
+                ],
+                expression: 'errors',
+                threshold: 1
+              }]
+            }
+          }
+        }
+      }
+      const serverless = createMockServerless(service)
+      const plugin = new ServerlessCanaryDeployments(serverless, { stage: 'dev' })
+
+      // When
+      const resources = plugin.buildCanaryAlarmResources()
+
+      // Then
+      const logicalIds = resources.map(r => Object.keys(r)[0])
+      expect(logicalIds).to.include('HelloLambdaFunctionCanaryMetricmathAlarm')
+    })
+
+    it('includes metric math alarm in composite alarm rule', () => {
+      // Given
+      const service = {
+        service: 'my-service',
+        functions: {
+          hello: {
+            handler: 'handler.hello',
+            deploymentSettings: {
+              type: 'Linear10PercentEvery1Minute',
+              alias: 'Live',
+              canaryAlarms: [{
+                name: 'durationcheck',
+                metrics: [
+                  { id: 'errors', metric: 'Errors', statistic: 'Sum' },
+                  { id: 'invocations', metric: 'Invocations', statistic: 'Sum' }
+                ],
+                expression: 'errors / invocations',
+                threshold: 0.05
+              }]
+            }
+          }
+        }
+      }
+      const serverless = createMockServerless(service)
+      const plugin = new ServerlessCanaryDeployments(serverless, { stage: 'dev' })
+
+      // When
+      const resources = plugin.buildCanaryAlarmResources()
+
+      // Then
+      const compositeResource = resources.find(r => Object.keys(r)[0] === 'CanaryDeploymentCompositeAlarm')
+      const alarmRule = compositeResource.CanaryDeploymentCompositeAlarm.Properties.AlarmRule['Fn::Sub']
+      expect(alarmRule).to.include('HelloLambdaFunctionCanaryDurationcheckAlarm')
+    })
   })
 })
