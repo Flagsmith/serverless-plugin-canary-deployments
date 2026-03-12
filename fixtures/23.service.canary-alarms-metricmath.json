@@ -1,0 +1,24 @@
+{
+  "service": "canary-deployments-test",
+  "functions": {
+    "hello": {
+      "handler": "handler.hello",
+      "events": [{ "http": "GET hello" }],
+      "deploymentSettings": {
+        "type": "Linear10PercentEvery1Minute",
+        "alias": "Live",
+        "canaryAlarms": [
+          {
+            "name": "durationcheck",
+            "metrics": [
+              { "id": "errors", "metric": "Errors", "statistic": "Sum" },
+              { "id": "invocations", "metric": "Invocations", "statistic": "Sum" }
+            ],
+            "expression": "errors / invocations",
+            "threshold": 0.05
+          }
+        ]
+      }
+    }
+  }
+}
