@@ -438,7 +438,7 @@ describe('ServerlessCanaryDeployments', () => {
 
       // Then
       const logicalIds = resources.map(r => Object.keys(r)[0])
-      expect(logicalIds).to.include('HelloLambdaFunctionCanaryMetricmathAlarm')
+      expect(logicalIds).to.include('HelloLambdaFunctionCanaryUnknownAlarm')
     })
 
     it('includes metric math alarm in composite alarm rule', () => {
