@@ -2,7 +2,16 @@
   "type": "object",
   "properties": {
     "deploymentSettings": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "stopOnSignals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "OS signals that trigger stopping in-progress CodeDeploy deployments with auto-rollback"
+        }
+      }
     }
   }
 }

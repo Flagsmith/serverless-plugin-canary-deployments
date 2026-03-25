@@ -21,6 +21,52 @@ class ServerlessCanaryDeployments {
       'after:aws:package:finalize:mergeCustomProviderResources': this.addCanaryDeploymentResources.bind(this)
     }
     this.addConfigSchema()
+    this.registerSignalHandlers()
+  }
+
+  registerSignalHandlers () {
+    const signals = _.getOr([], 'custom.deploymentSettings.stopOnSignals', this.service)
+    for (const signal of signals) {
+      process.on(signal, async () => {
+        this.serverless.cli.log(`Received ${signal}, stopping in-progress deployments...`)
+        await this.stopInProgressDeployments()
+        process.exit(1)
+      })
+    }
+  }
+
+  async stopInProgressDeployments () {
+    try {
+      const stackName = this.naming.getStackName()
+      const logicalId = this.codeDeployAppName
+
+      const app = await this.awsProvider.request('CloudFormation', 'describeStackResource', {
+        StackName: stackName,
+        LogicalResourceId: logicalId
+      })
+      const physicalAppName = app.StackResourceDetail.PhysicalResourceId
+
+      const result = await this.awsProvider.request('CodeDeploy', 'listDeployments', {
+        applicationName: physicalAppName,
+        includeOnlyStatuses: ['InProgress', 'Queued', 'Ready']
+      })
+
+      const deployments = result.deployments || []
+      if (deployments.length > 0) {
+        this.serverless.cli.log(`Stopping ${deployments.length} in-progress deployment(s)...`)
+      }
+
+      await Promise.all(deployments.map(deploymentId =>
+        this.awsProvider.request('CodeDeploy', 'stopDeployment', {
+          deploymentId,
+          autoRollbackEnabled: true
+        }).then(() => {
+          this.serverless.cli.log(`Stopped deployment ${deploymentId}`)
+        })
+      ))
+    } catch (err) {
+      this.serverless.cli.log(`Failed to stop deployments: ${err.message}`)
+    }
   }
 
   get codeDeployAppName () {

@@ -276,6 +276,159 @@ describe('ServerlessCanaryDeployments', () => {
     })
   })
 
+  describe('stopOnSignals', () => {
+    afterEach(() => {
+      process.removeAllListeners('SIGUSR2')
+    })
+
+    it('registers signal handlers when stopOnSignals is configured', () => {
+      const service = {
+        service: 'my-service',
+        functions: {
+          hello: {
+            handler: 'handler.hello',
+            deploymentSettings: {
+              type: 'Linear10PercentEvery1Minute',
+              alias: 'Live'
+            }
+          }
+        }
+      }
+      const serverless = createMockServerless(service)
+      serverless.service.custom = {
+        deploymentSettings: {
+          stopOnSignals: ['SIGUSR2']
+        }
+      }
+
+      const listenersBefore = process.listenerCount('SIGUSR2')
+      const plugin = new ServerlessCanaryDeployments(serverless, { stage: 'dev' }) // eslint-disable-line no-unused-vars
+      const listenersAfter = process.listenerCount('SIGUSR2')
+
+      expect(listenersAfter).to.equal(listenersBefore + 1)
+    })
+
+    it('does not register signal handlers when stopOnSignals is empty', () => {
+      const service = {
+        service: 'my-service',
+        functions: {
+          hello: {
+            handler: 'handler.hello',
+            deploymentSettings: {
+              type: 'Linear10PercentEvery1Minute',
+              alias: 'Live'
+            }
+          }
+        }
+      }
+      const serverless = createMockServerless(service)
+      serverless.service.custom = {
+        deploymentSettings: {
+          stopOnSignals: []
+        }
+      }
+
+      const listenersBefore = process.listenerCount('SIGUSR2')
+      const plugin = new ServerlessCanaryDeployments(serverless, { stage: 'dev' }) // eslint-disable-line no-unused-vars
+      const listenersAfter = process.listenerCount('SIGUSR2')
+
+      expect(listenersAfter).to.equal(listenersBefore)
+    })
+
+    it('does not register signal handlers when stopOnSignals is not configured', () => {
+      const service = {
+        service: 'my-service',
+        functions: {
+          hello: {
+            handler: 'handler.hello',
+            deploymentSettings: {
+              type: 'Linear10PercentEvery1Minute',
+              alias: 'Live'
+            }
+          }
+        }
+      }
+      const serverless = createMockServerless(service)
+
+      const listenersBefore = process.listenerCount('SIGUSR2')
+      const plugin = new ServerlessCanaryDeployments(serverless, { stage: 'dev' }) // eslint-disable-line no-unused-vars
+      const listenersAfter = process.listenerCount('SIGUSR2')
+
+      expect(listenersAfter).to.equal(listenersBefore)
+    })
+  })
+
+  describe('stopInProgressDeployments', () => {
+    const createMockWithRequest = (service, requestFn) => {
+      const serverless = createMockServerless(service)
+      serverless.cli = { log: () => {} }
+      const provider = serverless.getProvider()
+      provider.request = requestFn
+      serverless.getProvider = () => provider
+      return serverless
+    }
+
+    const baseService = {
+      service: 'my-service',
+      functions: {
+        hello: {
+          handler: 'handler.hello',
+          deploymentSettings: {
+            type: 'Linear10PercentEvery1Minute',
+            alias: 'Live'
+          }
+        }
+      }
+    }
+
+    it('stops all in-progress deployments with auto-rollback', async () => {
+      const requestCalls = []
+      const serverless = createMockWithRequest(baseService, async (svc, method, params) => {
+        requestCalls.push({ service: svc, method, params })
+        if (svc === 'CloudFormation' && method === 'describeStackResource') {
+          return { StackResourceDetail: { PhysicalResourceId: 'my-codedeploy-app' } }
+        }
+        if (svc === 'CodeDeploy' && method === 'listDeployments') {
+          return { deployments: ['d-111', 'd-222'] }
+        }
+        return {}
+      })
+
+      const plugin = new ServerlessCanaryDeployments(serverless, { stage: 'dev' })
+      await plugin.stopInProgressDeployments()
+
+      const stopCalls = requestCalls.filter(c => c.method === 'stopDeployment')
+      expect(stopCalls).to.have.length(2)
+      expect(stopCalls[0].params).to.deep.equal({ deploymentId: 'd-111', autoRollbackEnabled: true })
+      expect(stopCalls[1].params).to.deep.equal({ deploymentId: 'd-222', autoRollbackEnabled: true })
+    })
+
+    it('handles no in-progress deployments gracefully', async () => {
+      const serverless = createMockWithRequest(baseService, async (svc, method) => {
+        if (svc === 'CloudFormation' && method === 'describeStackResource') {
+          return { StackResourceDetail: { PhysicalResourceId: 'my-codedeploy-app' } }
+        }
+        if (svc === 'CodeDeploy' && method === 'listDeployments') {
+          return { deployments: [] }
+        }
+        return {}
+      })
+
+      const plugin = new ServerlessCanaryDeployments(serverless, { stage: 'dev' })
+      await plugin.stopInProgressDeployments()
+    })
+
+    it('handles API errors gracefully', async () => {
+      const serverless = createMockWithRequest(baseService, async () => {
+        throw new Error('Stack not found')
+      })
+
+      const plugin = new ServerlessCanaryDeployments(serverless, { stage: 'dev' })
+      // Should not throw - errors are caught and logged
+      await plugin.stopInProgressDeployments()
+    })
+  })
+
   describe('buildCanaryAlarmResources', () => {
     it('returns correct logical IDs for canary alarms', () => {
       // Given
