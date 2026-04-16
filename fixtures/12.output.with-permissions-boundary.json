@@ -518,8 +518,12 @@
       "Type": "AWS::IAM::Role",
       "Properties": {
         "ManagedPolicyArns": [
-          "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForLambdaLimited",
-          "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
+          {
+            "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSCodeDeployRoleForLambdaLimited"
+          },
+          {
+            "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/AWSLambda_FullAccess"
+          }
         ],
         "AssumeRolePolicyDocument": {
           "Version": "2012-10-17",
