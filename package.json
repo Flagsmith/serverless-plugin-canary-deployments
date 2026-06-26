@@ -1,7 +1,7 @@
 {
   "name": "@flagsmith/serverless-plugin-canary-deployments",
   "engines": {
-    "node": ">=18.0"
+    "node": ">=20.0"
   },
   "version": "1.1.0",
   "description": "A Serverless plugin to implement canary deployment of Lambda functions",
@@ -38,6 +38,9 @@
   },
   "peerDependencies": {
     "serverless": ">= 1.26.0"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.3"
   },
   "keywords": [
     "aws",
