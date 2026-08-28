@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.0.0](https://github.com/Flagsmith/serverless-plugin-canary-deployments/compare/v1.1.0...v2.0.0) (2026-08-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* minimum supported Node version is now 20. Consumers on Node 18 will see an EBADENGINE warning on install.
+
+### Dependency Updates
+
+* Bump osls to 4 and fast-uri to 3.1.6 ([#100](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/100)) ([a68c978](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/a68c978b0cab089418b3499b3fff3275f555afc8))
+* Fix serialize-javascript RCE and bump minimum Node to 20 ([#93](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/93)) ([7ef1376](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/7ef1376218e646ae7c12a69753a10f9424efe891))
+
+
+### Other
+
+* **deps-dev:** bump brace-expansion from 1.1.15 to 1.1.18 ([#99](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/99)) ([957a54c](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/957a54c39b40be3030cae359b78f996a873a6acf))
+* **deps-dev:** bump fast-uri from 3.1.0 to 3.1.2 ([#84](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/84)) ([e62daab](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/e62daab0097cee23ec7f206d84237f5f7f2a111c))
+* **deps-dev:** bump form-data from 4.0.5 to 4.0.6 ([#90](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/90)) ([27973a4](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/27973a43c9524bf8a23a6ba2f3e47101a374e4d5))
+* **deps-dev:** bump js-yaml from 3.14.1 to 3.14.2 ([#91](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/91)) ([8e11418](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/8e114186aed192fdc9dd260ee204615e3a66c094))
+* **deps-dev:** bump js-yaml from 3.14.2 to 3.15.2 ([#101](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/101)) ([18c4b03](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/18c4b03311a14088c462e495a4d6097fc4120e9b))
+* **deps-dev:** bump qs from 6.14.2 to 6.15.2 ([#87](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/87)) ([3ec1fd2](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/3ec1fd22279fb93d12819a8b033dc05f5b1b782e))
+* **deps-dev:** bump undici from 7.28.0 to 7.29.0 ([#96](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/96)) ([6a82f13](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/6a82f136c4f3470cc3e65feb79b86a5e57171555))
+* **deps-dev:** replace serverless@3 with osls@3 to drop vulnerable tar ([#92](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/92)) ([f9b119c](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/f9b119c911d1e856e9cfd586b5bb0001741ca100))
+
 ## [1.1.0](https://github.com/Flagsmith/serverless-plugin-canary-deployments/compare/v1.0.0...v1.1.0) (2026-05-07)
 
 
