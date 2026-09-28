@@ -152,7 +152,7 @@ describe('ServerlessCanaryDeployments', () => {
       const deploymentGroup = resources.HelloLambdaFunctionDeploymentGroup
 
       expect(deploymentGroup).to.not.equal(undefined)
-      expect(deploymentGroup.Properties.AlarmConfiguration).to.equal(undefined)
+      expect(deploymentGroup.Properties.AlarmConfiguration).to.deep.equal({ Alarms: [], Enabled: false })
     })
 
     it('attaches composite alarm to all deployment groups when multiple functions have canaryAlarms', () => {
@@ -236,9 +236,9 @@ describe('ServerlessCanaryDeployments', () => {
       const helloDeploymentGroup = resources.HelloLambdaFunctionDeploymentGroup
       expect(helloDeploymentGroup.Properties.AlarmConfiguration).to.not.equal(undefined)
 
-      // world does not have canaryAlarms - should NOT have AlarmConfiguration
+      // world does not have canaryAlarms - should have alarms explicitly disabled
       const worldDeploymentGroup = resources.WorldLambdaFunctionDeploymentGroup
-      expect(worldDeploymentGroup.Properties.AlarmConfiguration).to.equal(undefined)
+      expect(worldDeploymentGroup.Properties.AlarmConfiguration).to.deep.equal({ Alarms: [], Enabled: false })
     })
 
     it('preserves existing alarms when canaryAlarms is also configured', () => {

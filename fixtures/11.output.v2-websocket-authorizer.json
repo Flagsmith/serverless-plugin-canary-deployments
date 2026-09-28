@@ -986,6 +986,10 @@
             "CodeDeployServiceRole",
             "Arn"
           ]
+        },
+        "AlarmConfiguration": {
+          "Alarms": [],
+          "Enabled": false
         }
       }
     },

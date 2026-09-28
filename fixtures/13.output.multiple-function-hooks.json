@@ -346,6 +346,10 @@
         "DeploymentStyle": {
           "DeploymentType": "BLUE_GREEN",
           "DeploymentOption": "WITH_TRAFFIC_CONTROL"
+        },
+        "AlarmConfiguration": {
+          "Alarms": [],
+          "Enabled": false
         }
       }
     },
@@ -409,6 +413,10 @@
         "DeploymentStyle": {
           "DeploymentType": "BLUE_GREEN",
           "DeploymentOption": "WITH_TRAFFIC_CONTROL"
+        },
+        "AlarmConfiguration": {
+          "Alarms": [],
+          "Enabled": false
         }
       }
     },
