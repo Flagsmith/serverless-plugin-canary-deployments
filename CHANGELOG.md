@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.0.1](https://github.com/Flagsmith/serverless-plugin-canary-deployments/compare/v2.0.0...v2.0.1) (2026-09-29)
+
+
+### Bug Fixes
+
+* Removing alarms from `deploymentSettings` doesn't detach them from the CodeDeploy deployment group ([#104](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/104)) ([b10c524](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/b10c5240da58be5fb6c4db1535d5b3acf526a1b0))
+
+
+### Other
+
+* **deps-dev:** bump fast-uri from 3.1.6 to 3.1.8 ([#102](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/102)) ([e5a22b8](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/e5a22b8b14d5832d0728527708205988e4f3bce9))
+
 ## [2.0.0](https://github.com/Flagsmith/serverless-plugin-canary-deployments/compare/v1.1.0...v2.0.0) (2026-08-28)
 
 
