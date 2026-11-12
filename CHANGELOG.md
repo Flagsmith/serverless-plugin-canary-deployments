@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.2](https://github.com/Flagsmith/serverless-plugin-canary-deployments/compare/v2.0.1...v2.0.2) (2026-11-12)
+
+
+### Other
+
+* **deps-dev:** bump brace-expansion from 1.1.18 to 1.1.21 ([#107](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/107)) ([85caf2d](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/85caf2dc6d385c0e23bf50b44f1f2046c4dd7332))
+* **deps-dev:** bump fast-uri from 3.1.8 to 3.1.9 ([#108](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/108)) ([9182785](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/9182785f794ced695b38d4c5e0937c2feae59eac))
+* **deps-dev:** bump undici from 7.29.0 to 7.30.1 ([#109](https://github.com/Flagsmith/serverless-plugin-canary-deployments/issues/109)) ([efda144](https://github.com/Flagsmith/serverless-plugin-canary-deployments/commit/efda1440ff300fe71fd060ff284d3ffe836404e9))
+
 ## [2.0.1](https://github.com/Flagsmith/serverless-plugin-canary-deployments/compare/v2.0.0...v2.0.1) (2026-09-29)
 
 
